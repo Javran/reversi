@@ -10,8 +10,10 @@ description:         description
 
 dependencies:
 - base
+- brick
 - containers
 - mtl
+- vty
 
 executables:
   reversi:
