@@ -9,6 +9,8 @@ import Graphics.Vty.Attributes (defAttr)
 import Graphics.Vty.Input.Events
 import Lens.Micro.Platform
 
+import qualified Data.Map.Strict as M
+
 import Game.Reversi.GameState
 
 {-
@@ -47,11 +49,11 @@ ui :: AppState -> Widget RName
 ui s =
     center
       $ border $ padAll 1 $ joinBorders
-      $ showCursor RName (toWidgetPos v h coord)
+      $ showCursor RName (toWidgetPos v h focus)
       $ vhLimit fullV fullH grid
   where
     (v,h) = (1,1)
-    AppState (UiBoard coord _) = s
+    AppState (UiBoard focus gs) = s
     (fullV, fullH) = ((v+1)*8+1, (h+1)*8+1)
     grid = center $ vBox (intersperse hBorder $ firstRow : rows)
       where
@@ -65,7 +67,12 @@ ui s =
       where
         hdW = vhLimit v 1 $ center $ str [hd]
     mkCell :: Int -> Int -> Widget RName
-    mkCell _rowInd _colInd = vhLimit v h $ center $ str "#"
+    mkCell rowInd colInd = vhLimit v h $ center $ str [ch]
+      where
+        coord = (rowInd, colInd)
+        ch = case gsBoard gs M.!? coord of
+          Just color -> if color then 'X' else 'O'
+          Nothing -> ' '
 
 clamped :: (Coord -> Coord) -> (Coord -> Coord)
 clamped f s

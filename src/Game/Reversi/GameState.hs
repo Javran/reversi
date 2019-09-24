@@ -34,6 +34,7 @@ import Game.Reversi.Core
   This module defines GameState and operations around it.
  -}
 
+{- TODO: use lens. -}
 data GameState
   = GameState
   { gsBoard :: Board
