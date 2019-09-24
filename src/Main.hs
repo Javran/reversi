@@ -1,16 +1,19 @@
 module Main
   ( main
+  , mainSimple
   ) where
 
 {-
   Implmentation of Reversi (https://en.wikipedia.org/wiki/Reversi)
  -}
 
+import Brick
 import Data.Maybe
 import Control.Monad.State
 import qualified Data.Map.Strict as M
 
 import Game.Reversi.GameState
+import Game.Reversi.Ui
 
 readMove :: String -> Maybe Coord
 readMove raw = coordTable M.!? raw
@@ -95,5 +98,8 @@ proceedGame = do
               liftIO $ putStrLn "Invalid move."
               proceedGame
 
+mainSimple :: IO ()
+mainSimple = evalStateT proceedGame initGameState
+
 main :: IO ()
-main = evalStateT proceedGame initGameState
+main = void $ defaultMain app initAppState

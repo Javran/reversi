@@ -1,5 +1,8 @@
 {-# LANGUAGE RecordWildCards, TemplateHaskell #-}
-module Game.Reversi.Ui where
+module Game.Reversi.Ui
+  ( app
+  , initAppState
+  ) where
 
 import Brick
 import Brick.Widgets.Border
@@ -103,3 +106,6 @@ app = App {appStartEvent = pure, ..}
     appHandleEvent = handleEvent
     appAttrMap _ = attrMap defAttr []
     appChooseCursor _ = showCursorNamed RName
+
+initAppState :: AppState
+initAppState = AppState (UiBoard (0,0) initGameState)
