@@ -7,7 +7,9 @@ module Game.Reversi.Ui
 import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Center
+import Control.Applicative
 import Data.List
+import Data.Maybe
 import Graphics.Vty.Attributes (defAttr)
 import Graphics.Vty.Input.Events
 import Lens.Micro.Platform
@@ -70,12 +72,18 @@ ui s =
       where
         hdW = vhLimit v 1 $ center $ str [hd]
     mkCell :: Int -> Int -> Widget RName
-    mkCell rowInd colInd = vhLimit v h $ center $ str [ch]
+    mkCell rowInd colInd =
+        vhLimit v h $ center
+          $ str [fromMaybe ' ' (chTaken <|> chPossible)]
       where
         coord = (rowInd, colInd)
-        ch = case gsBoard gs M.!? coord of
-          Just color -> if color then 'X' else 'O'
-          Nothing -> ' '
+        chTaken = do
+          color <- gsBoard gs M.!? coord
+          pure $  if color then 'X' else 'O'
+        chPossible = do
+          Right m <- pure (possibleMoves gs)
+          _ <- m M.!? coord
+          pure '?'
 
 clamped :: (Coord -> Coord) -> (Coord -> Coord)
 clamped f s
