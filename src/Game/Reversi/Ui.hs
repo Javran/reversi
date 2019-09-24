@@ -30,7 +30,7 @@ data RName = RName deriving (Eq, Ord)
 data UiBoard
   = UiBoard
     { _bdFocus :: Coord
-    , _bdGameStae :: GameState
+    , _bdGameState :: GameState
     }
 
 makeLenses ''UiBoard
@@ -97,6 +97,21 @@ handleEvent s e = case e of
     VtyEvent (EvKey k [])
       | Just move <- keyMove k ->
         continue $ (uiBoard . bdFocus %~ move) s
+    VtyEvent (EvKey k [])
+      | k `elem` [KEnter, KChar ' '] ->
+          let gs = s ^. uiBoard . bdGameState
+              focus = s ^. uiBoard . bdFocus
+          in case possibleMoves gs of
+            Left _ ->
+              -- force to skip
+              let Just gs' = switchSide gs
+              in continue $ s & uiBoard . bdGameState .~ gs'
+            Right m -> case m M.!? focus of
+              -- apply a valid move
+              Just _ ->
+                let Just gs' = applyMove gs focus
+                in continue $ s & uiBoard . bdGameState .~ gs'
+              Nothing -> continue s
     VtyEvent (EvKey (KChar 'q') []) -> halt s
     _ -> continue s
 
