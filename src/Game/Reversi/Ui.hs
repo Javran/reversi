@@ -25,7 +25,9 @@ import Game.Reversi.GameState
 
  -}
 
-data RName = RName deriving (Eq, Ord)
+data RName
+  = RBoard
+  deriving (Eq, Ord)
 
 data UiBoard
   = UiBoard
@@ -50,11 +52,10 @@ vhLimit v h = vLimit v . hLimit h
 toWidgetPos :: Int -> Int -> Coord -> Location
 toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 
-ui :: AppState -> Widget RName
-ui s =
-    center
-      $ border $ padAll 1 $ joinBorders
-      $ showCursor RName (toWidgetPos v h focus)
+widgetBoard :: AppState -> Widget RName
+widgetBoard s =
+    border $ padAll 1 $ joinBorders
+      $ showCursor RBoard (toWidgetPos v h focus)
       $ vhLimit fullV fullH grid
   where
     (v,h) = (1,1)
@@ -144,10 +145,10 @@ keyMove _ = Nothing
 app :: ReversiApp a
 app = App {appStartEvent = pure, ..}
   where
-    appDraw s = [ui s]
+    appDraw s = [center $ widgetBoard s]
     appHandleEvent = handleEvent
     appAttrMap _ = attrMap defAttr []
-    appChooseCursor _ = showCursorNamed RName
+    appChooseCursor _ = showCursorNamed RBoard
 
 initAppState :: AppState
 initAppState = AppState (UiBoard (0,0) initGameState)
