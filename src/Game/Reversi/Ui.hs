@@ -52,6 +52,27 @@ vhLimit v h = vLimit v . hLimit h
 toWidgetPos :: Int -> Int -> Coord -> Location
 toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 
+{-
+  TODO:
+
+  - render dark, light counts
+  - status for who's turn
+  - status for game concluded
+  - status for forced skip
+
+ -}
+widgetStatus :: AppState -> Widget RName
+widgetStatus _s =
+    border $ vLimit 1 $ darkCount <+> vBorder <+> lightCount <+> vBorder <+> statusText
+  where
+    darkCount =
+      str "X:" <+>
+        (hLimit 3 . padLeft Max $ str "??")
+    lightCount =
+      str "O:" <+>
+        (hLimit 3 . padLeft Max $ str "??")
+    statusText = str "TODO: status here."
+
 widgetBoard :: AppState -> Widget RName
 widgetBoard s =
     border $ padAll 1 $ joinBorders
@@ -145,7 +166,7 @@ keyMove _ = Nothing
 app :: ReversiApp a
 app = App {appStartEvent = pure, ..}
   where
-    appDraw s = [center $ widgetBoard s]
+    appDraw s = [center $ hCenter (widgetBoard s) <=> hCenter (widgetStatus s)]
     appHandleEvent = handleEvent
     appAttrMap _ = attrMap defAttr []
     appChooseCursor _ = showCursorNamed RBoard
