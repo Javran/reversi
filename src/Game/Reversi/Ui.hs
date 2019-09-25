@@ -112,6 +112,25 @@ handleEvent s e = case e of
                 let Just gs' = applyMove gs focus
                 in continue $ s & uiBoard . bdGameState .~ gs'
               Nothing -> continue s
+    VtyEvent (EvKey (KChar 'r') []) ->
+      let gs = s ^. uiBoard . bdGameState
+      in continue $ if gameConcluded gs then initAppState else s
+    VtyEvent (EvKey (KChar '\t') []) ->
+      let gs = s ^. uiBoard . bdGameState
+          focus = s ^. uiBoard . bdFocus
+          orderedPossibleMoves = case possibleMoves gs of
+            Left _ -> []
+            Right m -> M.keys m
+          nextMoves =
+            zip
+              orderedPossibleMoves
+              (let hd:tl = orderedPossibleMoves in tl <> [hd])
+      in continue $ case lookup focus nextMoves of
+        Nothing ->
+          case orderedPossibleMoves of
+            [] -> s
+            hd:_ -> s & uiBoard . bdFocus .~ hd
+        Just c' -> s & uiBoard . bdFocus .~ c'
     VtyEvent (EvKey (KChar 'q') []) -> halt s
     _ -> continue s
 
