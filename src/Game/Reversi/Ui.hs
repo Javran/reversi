@@ -53,30 +53,31 @@ vhLimit v h = vLimit v . hLimit h
 toWidgetPos :: Int -> Int -> Coord -> Location
 toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 
-{-
-  TODO:
-
-  - status for who's turn
-  - status for game concluded
-  - status for forced skip
-
- -}
 widgetStatus :: AppState -> Widget RName
 widgetStatus s =
-    border $ vLimit 1 $ darkCountW <+> vBorder <+> lightCountW <+> vBorder <+> statusText
+    border $ vLimit 1 $
+      darkCountW <+> vBorder <+> lightCountW <+> vBorder <+> statusW
   where
+    gs = s ^. uiBoard . bdGameState
     (darkCount, lightCount) =
       bimap M.size M.size
       . M.partition id
-      . gsBoard
-      $ s ^. uiBoard . bdGameState
+      $ gsBoard gs
     darkCountW =
       str "X:" <+>
         (hLimit 3 . padLeft Max $ str (show darkCount))
     lightCountW =
       str "O:" <+>
         (hLimit 3 . padLeft Max $ str (show lightCount))
-    statusText = str "TODO: status here."
+    statusW = hLimit 40 $ hCenter $ str statusMsg
+    statusMsg =
+      if gameConcluded gs
+        then "Game concluded."
+        else
+          let whoText = if gsTurn gs then "Dark (X)'s turn" else "Light (O)'s turn"
+          in case possibleMoves gs of
+            Left _ -> whoText <> " (must skip)"
+            Right _ -> whoText
 
 widgetBoard :: AppState -> Widget RName
 widgetBoard s =
