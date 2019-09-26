@@ -11,6 +11,7 @@ import Control.Applicative
 import Data.Bifunctor
 import Data.List
 import Data.Maybe
+import Data.Tuple
 import Graphics.Vty.Attributes (defAttr)
 import Graphics.Vty.Input.Events
 import Lens.Micro.Platform
@@ -48,6 +49,40 @@ makeLenses ''AppState
 
 type ReversiApp e = App AppState e RName
 
+{-
+  Regarding whether dark or light should go first:
+  since I've made dark=True light=False, it's natural for False to go first,
+  that's what I'll do for data representations.
+  but for the ui it occurs to me more often that dark goes first.
+ -}
+
+-- Move: (<who>, (<move (Nothing for skip)>, (<light count>, <dark count>)
+type BoardCount = (Int, Int) -- light first.
+type Move = (Color, (Maybe Coord, BoardCount))
+
+boardCount :: GameState -> BoardCount
+boardCount =
+  bimap length length
+  . swap -- as partition places positive stuff in front.
+  . partition id
+  . M.elems
+  . gsBoard
+
+{-
+  XXXRec functions are like their counterpart,
+  but also keeps a history record (i.e. Move type)
+ -}
+
+applyMoveRec :: GameState -> Coord -> Maybe (GameState, Move)
+applyMoveRec gs c = do
+  gs' <- applyMove gs c
+  pure (gs', (gsTurn gs, (Just c, boardCount gs')))
+
+switchSideRec :: GameState -> Maybe (GameState, Move)
+switchSideRec gs = do
+  gs' <- switchSide gs
+  pure (gs', (gsTurn gs, (Nothing, boardCount gs')))
+
 vhLimit :: Int -> Int -> Widget a -> Widget a
 vhLimit v h = vLimit v . hLimit h
 
@@ -60,10 +95,7 @@ widgetStatus s =
       darkCountW <+> vBorder <+> lightCountW <+> vBorder <+> statusW
   where
     gs = s ^. uiBoard . bdGameState
-    (darkCount, lightCount) =
-      bimap M.size M.size
-      . M.partition id
-      $ gsBoard gs
+    (lightCount, darkCount) = boardCount gs
     darkCountW =
       str "X:" <+>
         (hLimit 3 . padLeft Max $ str (show darkCount))
@@ -133,12 +165,12 @@ handleEvent s e = case e of
           in case possibleMoves gs of
             Left _ ->
               -- force to skip
-              let Just gs' = switchSide gs
+              let Just (gs', _move) = switchSideRec gs
               in continue $ s & uiBoard . bdGameState .~ gs'
             Right m -> case m M.!? focus of
               -- apply a valid move
               Just _ ->
-                let Just gs' = applyMove gs focus
+                let Just (gs', _move) = applyMoveRec gs focus
                 in continue $ s & uiBoard . bdGameState .~ gs'
               Nothing -> continue s
     VtyEvent (EvKey (KChar 'r') []) ->
