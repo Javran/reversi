@@ -32,10 +32,22 @@ data RName
   = RBoard
   deriving (Eq, Ord)
 
+{-
+  Regarding whether dark or light should go first:
+  since I've made dark=True light=False, it's natural for False to go first,
+  that's what I'll do for data representations.
+  but for the ui it occurs to me more often that dark goes first.
+ -}
+
+-- Move: (<who>, (<move (Nothing for skip)>, (<light count>, <dark count>)
+type BoardCount = (Int, Int) -- light first.
+type Move = (Color, (Maybe Coord, BoardCount))
+
 data UiBoard
   = UiBoard
     { _bdFocus :: Coord
     , _bdGameState :: GameState
+    , _bdMoves :: [] Move
     }
 
 makeLenses ''UiBoard
@@ -49,16 +61,6 @@ makeLenses ''AppState
 
 type ReversiApp e = App AppState e RName
 
-{-
-  Regarding whether dark or light should go first:
-  since I've made dark=True light=False, it's natural for False to go first,
-  that's what I'll do for data representations.
-  but for the ui it occurs to me more often that dark goes first.
- -}
-
--- Move: (<who>, (<move (Nothing for skip)>, (<light count>, <dark count>)
-type BoardCount = (Int, Int) -- light first.
-type Move = (Color, (Maybe Coord, BoardCount))
 
 boardCount :: GameState -> BoardCount
 boardCount =
@@ -119,7 +121,7 @@ widgetBoard s =
       $ vhLimit fullV fullH grid
   where
     (v,h) = (1,1)
-    AppState (UiBoard focus gs) = s
+    AppState (UiBoard focus gs _mvs) = s
     (fullV, fullH) = ((v+1)*8+1, (h+1)*8+1)
     grid = center $ vBox (intersperse hBorder $ firstRow : rows)
       where
@@ -165,13 +167,15 @@ handleEvent s e = case e of
           in case possibleMoves gs of
             Left _ ->
               -- force to skip
-              let Just (gs', _move) = switchSideRec gs
-              in continue $ s & uiBoard . bdGameState .~ gs'
+              let Just (gs', mv) = switchSideRec gs
+              in continue $ s
+                   & uiBoard %~ (bdGameState .~ gs') . (bdMoves %~ (mv:))
             Right m -> case m M.!? focus of
               -- apply a valid move
               Just _ ->
-                let Just (gs', _move) = applyMoveRec gs focus
-                in continue $ s & uiBoard . bdGameState .~ gs'
+                let Just (gs', mv) = applyMoveRec gs focus
+                in continue $ s
+                     & uiBoard %~ (bdGameState .~ gs') . (bdMoves %~ (mv:))
               Nothing -> continue s
     VtyEvent (EvKey (KChar 'r') []) ->
       let gs = s ^. uiBoard . bdGameState
@@ -211,4 +215,4 @@ app = App {appStartEvent = pure, ..}
     appChooseCursor _ = showCursorNamed RBoard
 
 initAppState :: AppState
-initAppState = AppState (UiBoard (0,0) initGameState)
+initAppState = AppState (UiBoard (0,0) initGameState [])
