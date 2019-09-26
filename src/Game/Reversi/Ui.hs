@@ -8,6 +8,7 @@ import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Control.Applicative
+import Data.Bifunctor
 import Data.List
 import Data.Maybe
 import Graphics.Vty.Attributes (defAttr)
@@ -55,22 +56,26 @@ toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 {-
   TODO:
 
-  - render dark, light counts
   - status for who's turn
   - status for game concluded
   - status for forced skip
 
  -}
 widgetStatus :: AppState -> Widget RName
-widgetStatus _s =
-    border $ vLimit 1 $ darkCount <+> vBorder <+> lightCount <+> vBorder <+> statusText
+widgetStatus s =
+    border $ vLimit 1 $ darkCountW <+> vBorder <+> lightCountW <+> vBorder <+> statusText
   where
-    darkCount =
+    (darkCount, lightCount) =
+      bimap M.size M.size
+      . M.partition id
+      . gsBoard
+      $ s ^. uiBoard . bdGameState
+    darkCountW =
       str "X:" <+>
-        (hLimit 3 . padLeft Max $ str "??")
-    lightCount =
+        (hLimit 3 . padLeft Max $ str (show darkCount))
+    lightCountW =
       str "O:" <+>
-        (hLimit 3 . padLeft Max $ str "??")
+        (hLimit 3 . padLeft Max $ str (show lightCount))
     statusText = str "TODO: status here."
 
 widgetBoard :: AppState -> Widget RName
