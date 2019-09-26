@@ -22,7 +22,8 @@ import Game.Reversi.GameState
 {-
   TODO:
 
-  - render stuff in board.
+  - record moves
+  - help panel
 
  -}
 
