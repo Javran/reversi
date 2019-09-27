@@ -177,10 +177,12 @@ handleEvent s e = case e of
       | Just move <- keyMove k ->
         continue $ (uiBoard . bdFocus %~ move) s
     VtyEvent (EvKey k [])
-      | k `elem` [KEnter, KChar ' '] ->
-          let gs = s ^. uiBoard . bdGameState
-              focus = s ^. uiBoard . bdFocus
-          in case possibleMoves gs of
+      | k `elem` [KEnter, KChar ' ']
+      , gs <- s ^. uiBoard . bdGameState
+      , focus <-  s ^. uiBoard . bdFocus
+      , not (gameConcluded gs)
+        ->
+          case possibleMoves gs of
             Left _ ->
               -- force to skip
               let Just (gs', mv) = switchSideRec gs
