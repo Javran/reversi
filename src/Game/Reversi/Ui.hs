@@ -94,7 +94,7 @@ toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 widgetMoves :: AppState -> Widget RName
 widgetMoves s =
   border $
-    vhLimit 19 15 $
+    vhLimit 19 18 $
       if null moves
         then
           {-
@@ -103,9 +103,25 @@ widgetMoves s =
           fill ' '
         else
           center $
-            vBox (str . show <$> moves)
+            vBox movesWithSteps
   where
+    moveCount = length moves
     moves = s ^. uiBoard . bdMoves
+    movesWithSteps = zipWith widgetMove moves (iterate pred moveCount)
+    widgetMove :: Move -> Int -> Widget RName
+    widgetMove (who,(mCoord,(lCount,dCount))) step =
+      hLimit 3 (padRight Max $ str (show step)) <+>
+        hCenter ( hBox
+        [ str $ if who then "X " else "O "
+        , case mCoord of
+            Nothing -> str "--"
+            Just (r,c) -> str [['a'..] !! r, ['1'..] !! c]
+        , str " "
+        , hLimit 2 (padRight Max $ str (show dCount))
+        , str ":"
+        , hLimit 2 (padRight Max $ str (show lCount))
+        ])
+
 
 widgetStatus :: AppState -> Widget RName
 widgetStatus s =
