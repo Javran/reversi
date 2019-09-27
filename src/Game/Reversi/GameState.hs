@@ -86,6 +86,9 @@ mkPossibleMoves cs bd who = case Core.possibleMoves cs bd who of
 possibleMoves :: GameState -> PossibleMoves
 possibleMoves gs = bool fst snd (gsTurn gs) . gsNextMoves $ gs
 
+{-
+  If neither side can make any move, the game is concluded.
+ -}
 gameConcluded :: GameState -> Bool
 gameConcluded GameState { gsNextMoves = (Left _, Left _) } = True
 gameConcluded _ = False
@@ -107,5 +110,6 @@ applyMove gs coord = do
 
 switchSide :: GameState -> Maybe GameState
 switchSide gs = do
+  False <- pure (gameConcluded gs)
   Left bd <- pure (possibleMoves gs)
   pure (gs {gsTurn = not (gsTurn gs), gsBoard = bd})
