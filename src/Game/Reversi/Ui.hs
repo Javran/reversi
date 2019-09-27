@@ -91,6 +91,22 @@ vhLimit v h = vLimit v . hLimit h
 toWidgetPos :: Int -> Int -> Coord -> Location
 toWidgetPos v h (r,c) = Location (2 + c*(h+1), 2 + r*(v+1))
 
+widgetMoves :: AppState -> Widget RName
+widgetMoves s =
+  border $
+    vhLimit 19 15 $
+      if null moves
+        then
+          {-
+            we want this widget to always be there for keeping a stable layout.
+           -}
+          fill ' '
+        else
+          center $
+            vBox (str . show <$> moves)
+  where
+    moves = s ^. uiBoard . bdMoves
+
 widgetStatus :: AppState -> Widget RName
 widgetStatus s =
     border $ vLimit 1 $
@@ -209,7 +225,7 @@ keyMove _ = Nothing
 app :: ReversiApp a
 app = App {appStartEvent = pure, ..}
   where
-    appDraw s = [center $ hCenter (widgetBoard s) <=> hCenter (widgetStatus s)]
+    appDraw s = [center $ hCenter (widgetBoard s <+> widgetMoves s) <=> hCenter (widgetStatus s)]
     appHandleEvent = handleEvent
     appAttrMap _ = attrMap defAttr []
     appChooseCursor _ = showCursorNamed RBoard
