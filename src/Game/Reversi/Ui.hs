@@ -1,4 +1,8 @@
-{-# LANGUAGE RecordWildCards, TemplateHaskell #-}
+{-# LANGUAGE
+    RecordWildCards
+  , TemplateHaskell
+  , OverloadedStrings
+  #-}
 module Game.Reversi.Ui
   ( app
   , initAppState
@@ -168,13 +172,19 @@ widgetBoard s =
         hdW = vhLimit v 1 $ center $ str [hd]
     mkCell :: Int -> Int -> Widget RName
     mkCell rowInd colInd =
-        vhLimit v h $ center
+        vhLimit v h
+          . center
+          . withAttr attr
           $ str [fromMaybe ' ' (chTaken <|> chPossible)]
       where
         coord = (rowInd, colInd)
+        -- TODO: unify.
+        attr = case gsBoard gs M.!? coord of
+          Nothing -> mempty
+          Just c -> if c then "dark" else "light"
         chTaken = do
           color <- gsBoard gs M.!? coord
-          pure $  if color then 'X' else 'O'
+          pure $ if color then 'X' else 'O'
         chPossible = do
           Right m <- pure (possibleMoves gs)
           _ <- m M.!? coord
