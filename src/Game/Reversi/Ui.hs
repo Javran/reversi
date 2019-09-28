@@ -173,21 +173,18 @@ widgetBoard s =
     mkCell rowInd colInd =
         vhLimit v h
           . center
-          . withAttr attr
-          $ str [fromMaybe ' ' (chTaken <|> chPossible)]
+          $ fromMaybe (str " ") (chTaken <|> chPossible)
       where
         coord = (rowInd, colInd)
-        -- TODO: unify.
-        attr = case gsBoard gs M.!? coord of
-          Nothing -> mempty
-          Just c -> if c then "cell" <> "dark" else "cell" <> "light"
         chTaken = do
           color <- gsBoard gs M.!? coord
-          pure $ if color then 'X' else 'O'
+          pure $ if color
+                   then withAttr ("cell" <> "dark") (str "X")
+                   else withAttr ("cell" <> "light") (str "O")
         chPossible = do
           Right m <- pure (possibleMoves gs)
           _ <- m M.!? coord
-          pure '?'
+          pure $ withAttr ("cell" <> "possible") (str "?")
 
 clamped :: (Coord -> Coord) -> (Coord -> Coord)
 clamped f s
@@ -258,6 +255,7 @@ app = App {appStartEvent = pure, ..}
       attrMap defAttr
         [ ("cell" <> "dark", fg black <> bg blue)
         , ("cell" <> "light", fg white <> bg red)
+        , ("cell" <> "possible", fg green)
         ]
     appChooseCursor _ = showCursorNamed RBoard
 
