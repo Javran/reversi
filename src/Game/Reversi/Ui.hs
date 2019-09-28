@@ -16,7 +16,7 @@ import Data.Bifunctor
 import Data.List
 import Data.Maybe
 import Data.Tuple
-import Graphics.Vty.Attributes (defAttr)
+import Graphics.Vty.Attributes
 import Graphics.Vty.Input.Events
 import Lens.Micro.Platform
 
@@ -45,7 +45,7 @@ data RName
 
 -- Move: (<who>, (<move (Nothing for skip)>, (<light count>, <dark count>)
 type BoardCount = (Int, Int) -- light first.
-type Move = (Color, (Maybe Coord, BoardCount))
+type Move = (Game.Reversi.GameState.Color, (Maybe Coord, BoardCount))
 
 data UiBoard
   = UiBoard
@@ -255,7 +255,11 @@ app = App {appStartEvent = pure, ..}
   where
     appDraw s = [center $ hCenter (widgetBoard s <+> widgetMoves s) <=> hCenter (widgetStatus s)]
     appHandleEvent = handleEvent
-    appAttrMap _ = attrMap defAttr []
+    appAttrMap _ =
+      attrMap defAttr
+        [ ("dark", fg black <> bg blue)
+        , ("light", fg white <> bg red)
+        ]
     appChooseCursor _ = showCursorNamed RBoard
 
 initAppState :: AppState
