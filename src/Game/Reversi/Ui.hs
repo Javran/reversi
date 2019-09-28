@@ -126,7 +126,6 @@ widgetMoves s =
         , hLimit 2 (padRight Max $ str (show lCount))
         ])
 
-
 widgetStatus :: AppState -> Widget RName
 widgetStatus s =
     border $ vLimit 1 $
@@ -181,7 +180,7 @@ widgetBoard s =
         -- TODO: unify.
         attr = case gsBoard gs M.!? coord of
           Nothing -> mempty
-          Just c -> if c then "dark" else "light"
+          Just c -> if c then "cell" <> "dark" else "cell" <> "light"
         chTaken = do
           color <- gsBoard gs M.!? coord
           pure $ if color then 'X' else 'O'
@@ -257,8 +256,8 @@ app = App {appStartEvent = pure, ..}
     appHandleEvent = handleEvent
     appAttrMap _ =
       attrMap defAttr
-        [ ("dark", fg black <> bg blue)
-        , ("light", fg white <> bg red)
+        [ ("cell" <> "dark", fg black <> bg blue)
+        , ("cell" <> "light", fg white <> bg red)
         ]
     appChooseCursor _ = showCursorNamed RBoard
 
